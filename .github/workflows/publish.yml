@@ -26,7 +26,7 @@ jobs:
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "20"
           registry-url: "https://npm.pkg.github.com"
           scope: "@hashithaniroshan12"
           # Cache npm dependencies between runs (speeds up future publishes)
