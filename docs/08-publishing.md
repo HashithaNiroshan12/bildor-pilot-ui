@@ -23,7 +23,14 @@ It works exactly like `npmjs.com` but:
 
 Go to [github.com/new](https://github.com/new) and create a repository named `bildor-pilot-ui`.
 
-**Step 2: Push your code**
+**Step 2: Enable Actions write permissions (CRITICAL — easy to miss)**
+
+In your repo → **Settings → Actions → General → Workflow permissions**
+→ Select **"Read and write permissions"** → Save
+
+Without this, `GITHUB_TOKEN` cannot write to GitHub Packages and the publish step will fail with exit code 1.
+
+**Step 3: Push your code**
 
 ```bash
 cd "D:\Builder Pilot\bildor-pilot-ui"
@@ -35,12 +42,6 @@ git branch -M main
 git remote add origin https://github.com/HashithaNiroshan12/bildor-pilot-ui.git
 git push -u origin main
 ```
-
-**Step 3: Make sure the repository visibility allows packages**
-
-Go to your repo → Settings → Actions → General → make sure "Read and write permissions" is enabled under Workflow permissions.
-
-That's it — no tokens, no secrets needed. GitHub automatically provides `GITHUB_TOKEN` to workflows.
 
 ---
 
@@ -61,6 +62,25 @@ When the tag reaches GitHub, the Actions workflow triggers automatically. Watch 
 
 ---
 
+## Q: The GitHub Actions job failed with exit code 1. What should I check?
+
+Work through this checklist in order:
+
+**1. Actions permissions (most common cause)**
+Go to: repo → Settings → Actions → General → Workflow permissions
+→ Must be set to **"Read and write permissions"**
+
+**2. Workflow file is on main branch**
+The `publish.yml` must be committed and pushed to `main` before you push a tag. Pushing a tag before the workflow file exists means the trigger fires but there's nothing to run.
+
+**3. Node.js deprecation warning (not an error)**
+The message about "Node.js 20 actions are deprecated" is a WARNING, not the cause of the failure. It's suppressed by the `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` env variable in the updated workflow.
+
+**4. Check the full Actions log**
+Go to: repo → Actions → click the failed run → click the failed step → read the full output. The exact error will be there.
+
+---
+
 ## Q: Can you explain the `publish.yml` workflow line by line?
 
 ```yaml
@@ -76,7 +96,11 @@ on:
 ```yaml
 jobs:
   publish:
-    runs-on: ubuntu-latest     # Use a fresh Ubuntu virtual machine
+    runs-on: ubuntu-latest
+
+    # Suppresses the "Node.js 20 is deprecated" warning on GitHub Actions
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     permissions:
       contents: read     # Read the repo code
@@ -86,26 +110,32 @@ jobs:
 ```yaml
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4    # Download the repo code to the VM
+        uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          # This configures npm to use GitHub Packages for this scope
           registry-url: "https://npm.pkg.github.com"
           scope: "@hashithaniroshan12"
+          cache: "npm"       # Cache node_modules between runs
 
       - name: Install dependencies
-        run: npm ci    # Fast, deterministic install from package-lock.json
+        run: npm install     # More tolerant than npm ci for lockfile drift
 
       - name: Build library
-        run: npm run build    # Runs: vite build && tsc -p tsconfig.build.json
+        run: npm run build   # vite build + tsc -p tsconfig.build.json
+
+      - name: Verify dist/ was produced
+        run: |
+          ls -la dist/
+          test -f dist/index.es.js  || exit 1
+          test -f dist/index.cjs.js || exit 1
+          test -f dist/index.d.ts   || exit 1
 
       - name: Publish to GitHub Packages
         run: npm publish
         env:
-          # GitHub injects this token automatically — no manual setup
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
@@ -197,7 +227,23 @@ function MyPage() {
 
 ## Q: Can I test the library locally without publishing?
 
-Yes — use `npm link` to create a local symlink:
+There are two approaches. The `file:` path method is simpler and more reliable on Windows.
+
+### Option A — `file:` path (recommended for local dev)
+
+In the consumer app's `package.json`, reference the library by its local folder path:
+
+```json
+"dependencies": {
+  "@hashithaniroshan12/bildor-pilot-ui": "file:../../bildor-pilot-ui"
+}
+```
+
+Then run `npm install`. npm copies the `dist/` folder directly — no registry, no auth needed.
+
+When you're ready to use the published version, change the value back to `"^0.1.0"`.
+
+### Option B — `npm link`
 
 ```bash
 # In the library folder — register it globally
@@ -209,10 +255,9 @@ cd "D:\Builder Pilot\example-app"
 npm link @hashithaniroshan12/bildor-pilot-ui
 ```
 
-Now changes you make in `bildor-pilot-ui/src` will be reflected in `example-app` after running `npm run build:watch` in the library:
+Use `npm run build:watch` in the library to auto-rebuild on every save:
 
 ```bash
-# In bildor-pilot-ui — auto-rebuild on save
 npm run build:watch
 ```
 

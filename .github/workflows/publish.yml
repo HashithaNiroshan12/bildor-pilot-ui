@@ -10,6 +10,10 @@ jobs:
   publish:
     runs-on: ubuntu-latest
 
+    # Fix: use Node.js 24 runtime for GitHub Actions (suppresses deprecation warning)
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
     # Grant permission to write packages to GitHub Packages registry
     permissions:
       contents: read
@@ -19,23 +23,34 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          # Point npm at GitHub Packages registry
           registry-url: "https://npm.pkg.github.com"
-          # Scope tells npm: packages under @hashithaniroshan12/ go to GitHub
           scope: "@hashithaniroshan12"
+          # Cache npm dependencies between runs (speeds up future publishes)
+          cache: "npm"
 
       - name: Install dependencies
-        run: npm ci
+        # Use npm install instead of npm ci to tolerate any lockfile drift
+        run: npm install
 
       - name: Build library
         run: npm run build
 
+      - name: Verify dist/ was produced
+        # Fail fast with a clear message if build produced no output
+        run: |
+          echo "--- dist/ contents ---"
+          ls -la dist/
+          test -f dist/index.es.js  || (echo "ERROR: dist/index.es.js missing" && exit 1)
+          test -f dist/index.cjs.js || (echo "ERROR: dist/index.cjs.js missing" && exit 1)
+          test -f dist/index.d.ts   || (echo "ERROR: dist/index.d.ts missing"   && exit 1)
+          echo "--- dist/ verified OK ---"
+
       - name: Publish to GitHub Packages
         run: npm publish
         env:
-          # GitHub automatically provides this token — no setup needed
+          # GitHub automatically provides this token — no manual setup needed
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
