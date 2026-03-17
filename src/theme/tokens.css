@@ -1,0 +1,57 @@
+:root {
+    /* brand palette */
+    --brand: #2196f3;
+    --brand-contrast: #ffffff;
+  
+    /* light */
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --surface-2: #f6f7fb;
+    --text: #111827;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+  
+    /* sizing */
+    --radius: 14px;
+    --control-h: 42px;
+    --control-font: 14px;
+    --control-px: 0.9rem;
+  
+    /* focus ring */
+    --focus: 0 0 0 3px color-mix(in srgb, var(--brand) 30%, transparent);
+
+      /* map PrimeReact theme primary to your token */
+    --primary-color: var(--brand);
+    --primary-color-text: var(--brand-contrast);
+
+    /* some themes also use these */
+    --primary-50:  color-mix(in srgb, var(--brand) 10%, white);
+    --primary-100: color-mix(in srgb, var(--brand) 20%, white);
+    --primary-200: color-mix(in srgb, var(--brand) 30%, white);
+    --primary-300: color-mix(in srgb, var(--brand) 40%, white);
+    --primary-400: color-mix(in srgb, var(--brand) 60%, white);
+    --primary-500: var(--brand);
+    --primary-600: color-mix(in srgb, var(--brand) 85%, black);
+    --primary-700: color-mix(in srgb, var(--brand) 70%, black);
+    --primary-800: color-mix(in srgb, var(--brand) 60%, black);
+    --primary-900: color-mix(in srgb, var(--brand) 50%, black);
+  }
+  
+  :root[data-theme="dark"] {
+    --brand: #4baaf5;
+    --bg: #0b1220;
+    --surface: #0f172a;
+    --surface-2: #111c33;
+    --text: #e5e7eb;
+    --muted: #9ca3af;
+    --border: #24324a;
+  
+    --brand: #818cf8;
+    --brand-contrast: #0b1220;
+  
+    --focus: 0 0 0 3px rgba(129, 140, 248, 0.25);
+  }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+  }
