@@ -74,10 +74,62 @@ Go to: repo → Settings → Actions → General → Workflow permissions
 The `publish.yml` must be committed and pushed to `main` before you push a tag. Pushing a tag before the workflow file exists means the trigger fires but there's nothing to run.
 
 **3. Node.js deprecation warning (not an error)**
-The message about "Node.js 20 actions are deprecated" is a WARNING, not the cause of the failure. It's suppressed by the `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` env variable in the updated workflow.
+The message about "Node.js 20 actions are deprecated" is a WARNING, not the cause of the failure.
+The current workflow already handles this two ways:
+- `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` env variable opts into Node 24 now
+- `actions/checkout@v5` and `actions/setup-node@v5` run natively on Node 24
+
+See: [GitHub changelog — Deprecation of Node 20 on GitHub Actions runners](https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/)
 
 **4. Check the full Actions log**
 Go to: repo → Actions → click the failed run → click the failed step → read the full output. The exact error will be there.
+
+---
+
+## Q: How many ways can the workflow be triggered?
+
+Two ways:
+
+| Trigger | When it fires | Use for |
+|---|---|---|
+| **Tag push** | Automatically when you push a `v*` tag | Real releases |
+| **workflow_dispatch** | Manually from the GitHub Actions UI | Testing, debugging, dry runs |
+
+---
+
+## Q: How do I run the workflow manually from GitHub?
+
+**Step 1** — Go to your repo:
+`https://github.com/HashithaNiroshan12/bildor-pilot-ui`
+
+**Step 2** — Click the **Actions** tab in the top navigation
+
+**Step 3** — In the left sidebar, click **"Publish to GitHub Packages"**
+
+**Step 4** — Click the **"Run workflow"** button on the right side of the page
+
+**Step 5** — A dropdown panel appears. Set the options:
+```
+Branch: main
+Dry run — build and verify dist/ but skip npm publish
+  [ false ]  ← "false" = full publish,  "true" = test only
+```
+
+**Step 6** — Click the green **"Run workflow"** button
+
+> **Tip:** Always run with `dry_run = true` first to verify the build works in CI
+> before running with `dry_run = false` to actually publish.
+
+---
+
+## Q: What is a "dry run" and when should I use it?
+
+A dry run runs the full pipeline — install → build → verify `dist/` — but **skips the final `npm publish` step**.
+
+Use it when:
+- You want to check if the CI build works without releasing a new version
+- You've changed the build config (`vite.config.ts`, `tsconfig.build.json`) and want to verify it
+- Something failed before and you want to debug without bumping the version
 
 ---
 
@@ -86,11 +138,22 @@ Go to: repo → Actions → click the failed run → click the failed step → r
 ```yaml
 name: Publish to GitHub Packages
 
-# Only run this workflow when a tag starting with "v" is pushed
+# Trigger 1: automatically on git tag push (e.g. v0.1.0)
+# Trigger 2: manually from the GitHub Actions UI
 on:
   push:
     tags:
-      - "v*"         # matches v0.1.0, v1.0.0, v2.3.1, etc.
+      - "v*"              # matches v0.1.0, v1.0.0, v2.3.1, etc.
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run — build and verify dist/ but skip npm publish"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
 ```
 
 ```yaml
@@ -98,45 +161,61 @@ jobs:
   publish:
     runs-on: ubuntu-latest
 
-    # Suppresses the "Node.js 20 is deprecated" warning on GitHub Actions
+    # Opts into Node.js 24 for the Actions runtime now, before the June 2026
+    # forced migration. See: github.blog/changelog/2025-09-19-deprecation-of-node-20
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     permissions:
       contents: read     # Read the repo code
       packages: write    # Write (publish) to GitHub Packages
+                         # ← MUST be enabled in repo Settings → Actions → General
 ```
 
 ```yaml
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5     # v5 runs natively on Node 24 — no deprecation warning
 
       - name: Setup Node.js 20
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5   # v5 runs natively on Node 24 — no deprecation warning
         with:
           node-version: "20"
-          registry-url: "https://npm.pkg.github.com"
+          registry-url: "https://npm.pkg.github.com"   # point npm at GitHub Packages
           scope: "@hashithaniroshan12"
-          cache: "npm"       # Cache node_modules between runs
+          cache: "npm"                # cache node_modules between runs (faster CI)
 
       - name: Install dependencies
-        run: npm install     # More tolerant than npm ci for lockfile drift
+        run: npm install              # tolerant of lockfile drift, unlike npm ci
 
       - name: Build library
-        run: npm run build   # vite build + tsc -p tsconfig.build.json
+        run: npm run build            # runs: vite build && tsc -p tsconfig.build.json
+```
 
+```yaml
       - name: Verify dist/ was produced
+        # Fails fast with a clear message if any output file is missing
         run: |
+          echo "--- dist/ contents ---"
           ls -la dist/
-          test -f dist/index.es.js  || exit 1
-          test -f dist/index.cjs.js || exit 1
-          test -f dist/index.d.ts   || exit 1
+          test -f dist/index.es.js  || (echo "ERROR: dist/index.es.js missing" && exit 1)
+          test -f dist/index.cjs.js || (echo "ERROR: dist/index.cjs.js missing" && exit 1)
+          test -f dist/index.d.ts   || (echo "ERROR: dist/index.d.ts missing"   && exit 1)
+          echo "--- dist/ verified OK ---"
+```
 
+```yaml
       - name: Publish to GitHub Packages
+        # Skipped entirely when dry_run = "true"
+        if: ${{ github.event.inputs.dry_run != 'true' }}
         run: npm publish
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # auto-provided by GitHub
+
+      - name: Dry run complete
+        # Only runs when dry_run = "true" — confirms the pipeline passed
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        run: echo "Dry run finished — build verified, publish skipped."
 ```
 
 ---
