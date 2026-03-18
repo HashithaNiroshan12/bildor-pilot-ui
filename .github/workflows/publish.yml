@@ -49,21 +49,21 @@ jobs:
         run: npm install
 
       - name: Build library
-        run: npm run build
+        run: npm run build --workspace=packages/ui
 
       - name: Verify dist/ was produced
         run: |
           echo "--- dist/ contents ---"
-          ls -la dist/
-          test -f dist/index.es.js  || (echo "ERROR: dist/index.es.js missing" && exit 1)
-          test -f dist/index.cjs.js || (echo "ERROR: dist/index.cjs.js missing" && exit 1)
-          test -f dist/index.d.ts   || (echo "ERROR: dist/index.d.ts missing"   && exit 1)
+          ls -la packages/ui/dist/
+          test -f packages/ui/dist/index.es.js  || (echo "ERROR: packages/ui/dist/index.es.js missing" && exit 1)
+          test -f packages/ui/dist/index.cjs.js || (echo "ERROR: packages/ui/dist/index.cjs.js missing" && exit 1)
+          test -f packages/ui/dist/index.d.ts   || (echo "ERROR: packages/ui/dist/index.d.ts missing"   && exit 1)
           echo "--- dist/ verified OK ---"
 
       - name: Publish to GitHub Packages
         # Skip publish if this is a dry run (useful for testing the build without releasing)
         if: ${{ github.event.inputs.dry_run != 'true' }}
-        run: npm publish
+        run: npm publish --workspace=packages/ui
         env:
           # GitHub automatically provides this token — no manual setup needed
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
