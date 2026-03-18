@@ -1,57 +1,145 @@
 :root {
-    /* brand palette */
-    --brand: #2196f3;
-    --brand-contrast: #ffffff;
-  
-    /* light */
-    --bg: #ffffff;
-    --surface: #ffffff;
-    --surface-2: #f6f7fb;
-    --text: #111827;
-    --muted: #6b7280;
-    --border: #e5e7eb;
-  
-    /* sizing */
-    --radius: 14px;
-    --control-h: 42px;
-    --control-font: 14px;
-    --control-px: 0.9rem;
-  
-    /* focus ring */
-    --focus: 0 0 0 3px color-mix(in srgb, var(--brand) 30%, transparent);
+  /* brand palette */
+  --brand: #1F6FEB;
+  --brand-contrast: #ffffff;
+  --brand-hover: color-mix(in srgb, #1F6FEB 88%, black);
+  --brand-active: color-mix(in srgb, #1F6FEB 76%, black);
+  --brand-subtle: color-mix(in srgb, #1F6FEB 10%, white);
 
-      /* map PrimeReact theme primary to your token */
-    --primary-color: var(--brand);
-    --primary-color-text: var(--brand-contrast);
+  /* surfaces */
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f6f7fb;
+  --surface-3: #eff1f5;
 
-    /* some themes also use these */
-    --primary-50:  color-mix(in srgb, var(--brand) 10%, white);
-    --primary-100: color-mix(in srgb, var(--brand) 20%, white);
-    --primary-200: color-mix(in srgb, var(--brand) 30%, white);
-    --primary-300: color-mix(in srgb, var(--brand) 40%, white);
-    --primary-400: color-mix(in srgb, var(--brand) 60%, white);
-    --primary-500: var(--brand);
-    --primary-600: color-mix(in srgb, var(--brand) 85%, black);
-    --primary-700: color-mix(in srgb, var(--brand) 70%, black);
-    --primary-800: color-mix(in srgb, var(--brand) 60%, black);
-    --primary-900: color-mix(in srgb, var(--brand) 50%, black);
-  }
-  
-  :root[data-theme="dark"] {
-    --brand: #4baaf5;
-    --bg: #0b1220;
-    --surface: #0f172a;
-    --surface-2: #111c33;
-    --text: #e5e7eb;
-    --muted: #9ca3af;
-    --border: #24324a;
-  
-    --brand: #818cf8;
-    --brand-contrast: #0b1220;
-  
-    --focus: 0 0 0 3px rgba(129, 140, 248, 0.25);
-  }
-  html, body {
-    background: var(--bg);
-    color: var(--text);
-  }
+  /* text */
+  --text: #111827;
+  --text-secondary: #374151;
+  --muted: #6b7280;
+
+  /* borders */
+  --border: #e5e7eb;
+  --border-strong: #d1d5db;
+
+  /* semantic states */
+  --success: #16a34a;
+  --success-bg: #f0fdf4;
+  --success-border: #bbf7d0;
+  --success-text: #15803d;
+
+  --warning: #d97706;
+  --warning-bg: #fffbeb;
+  --warning-border: #fde68a;
+  --warning-text: #b45309;
+
+  --danger: #dc2626;
+  --danger-bg: #fef2f2;
+  --danger-border: #fecaca;
+  --danger-text: #b91c1c;
+
+  --info: #0284c7;
+  --info-bg: #f0f9ff;
+  --info-border: #bae6fd;
+  --info-text: #0369a1;
+
+  /* sizing */
+  --radius: 14px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+  --control-h: 44px;
+  --control-font: 14px;
+  --control-px: 0.9rem;
+
+  /* typography scale */
+  --font-xs: 11px;
+  --font-sm: 13px;
+  --font-base: 14px;
+  --font-md: 15px;
+  --font-lg: 16px;
+  --font-xl: 18px;
+  --font-2xl: 20px;
+
+  /* spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+
+  /* shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+
+  /* focus ring */
+  --focus: 0 0 0 3px color-mix(in srgb, var(--brand) 30%, transparent);
+
+  /* map PrimeReact theme primary to your token */
+  --primary-color: var(--brand);
+  --primary-color-text: var(--brand-contrast);
+
+  /* some themes also use these */
+  --primary-50:  color-mix(in srgb, var(--brand) 10%, white);
+  --primary-100: color-mix(in srgb, var(--brand) 20%, white);
+  --primary-200: color-mix(in srgb, var(--brand) 30%, white);
+  --primary-300: color-mix(in srgb, var(--brand) 40%, white);
+  --primary-400: color-mix(in srgb, var(--brand) 60%, white);
+  --primary-500: var(--brand);
+  --primary-600: color-mix(in srgb, var(--brand) 85%, black);
+  --primary-700: color-mix(in srgb, var(--brand) 70%, black);
+  --primary-800: color-mix(in srgb, var(--brand) 60%, black);
+  --primary-900: color-mix(in srgb, var(--brand) 50%, black);
+}
+
+:root[data-theme="dark"] {
+  --brand: #4d8ef5;
+  --brand-contrast: #0b1220;
+  --brand-hover: color-mix(in srgb, #4d8ef5 88%, white);
+  --brand-active: color-mix(in srgb, #4d8ef5 76%, white);
+  --brand-subtle: color-mix(in srgb, #4d8ef5 15%, #0b1220);
+
+  --bg: #0b1220;
+  --surface: #0f172a;
+  --surface-2: #111c33;
+  --surface-3: #152040;
+
+  --text: #e5e7eb;
+  --text-secondary: #d1d5db;
+  --muted: #9ca3af;
+
+  --border: #24324a;
+  --border-strong: #334155;
+
+  --success: #22c55e;
+  --success-bg: rgba(22, 163, 74, 0.15);
+  --success-border: rgba(34, 197, 94, 0.3);
+  --success-text: #4ade80;
+
+  --warning: #f59e0b;
+  --warning-bg: rgba(217, 119, 6, 0.15);
+  --warning-border: rgba(245, 158, 11, 0.3);
+  --warning-text: #fbbf24;
+
+  --danger: #ef4444;
+  --danger-bg: rgba(220, 38, 38, 0.15);
+  --danger-border: rgba(239, 68, 68, 0.3);
+  --danger-text: #f87171;
+
+  --info: #38bdf8;
+  --info-bg: rgba(2, 132, 199, 0.15);
+  --info-border: rgba(56, 189, 248, 0.3);
+  --info-text: #7dd3fc;
+
+  --focus: 0 0 0 3px color-mix(in srgb, #4d8ef5 30%, transparent);
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+}

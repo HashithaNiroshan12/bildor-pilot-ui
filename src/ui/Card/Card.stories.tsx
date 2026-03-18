@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Card } from "./Card";
-import { Button } from "./Button";
+import { Button } from "../Button/Button";
 
 const meta: Meta<typeof Card> = {
   title: "Components/Card",
@@ -31,7 +31,7 @@ export const WithFooter: Story = {
     footer: (
       <div style={{ display: "flex", gap: 8 }}>
         <Button label="View Details" size="small" />
-        <Button label="Dismiss" size="small" severity="secondary" outlined />
+        <Button label="Dismiss" size="small" severity="secondary" variant="outlined" />
       </div>
     ),
   },
