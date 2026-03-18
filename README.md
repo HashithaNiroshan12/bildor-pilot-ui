@@ -18,10 +18,10 @@ This is a private npm package that wraps [PrimeReact](https://primereact.org) co
 | Language | TypeScript | ~5.9 |
 | UI Framework | React | ^19 |
 | Component Base | PrimeReact | ^10 |
-| Build Tool | Vite (library mode) | ^7 |
+| Build Tool | Vite (library mode) | ^7.3 |
 | Visual Testing | Storybook | ^10 |
 | Publishing | GitHub Packages | — |
-| CI / Automation | GitHub Actions | — |
+| CI / Automation | GitHub Actions (Node 24) | — |
 
 ---
 
@@ -64,6 +64,9 @@ npm install
 npm run storybook     # → http://localhost:6006
 ```
 
+> If port 6006 is busy, Storybook auto-picks the next available port (6007, 6008...).
+> The actual URL is printed in the terminal output.
+
 ---
 
 ## Commands
@@ -98,7 +101,7 @@ src/
 └── preview.ts        ← Global CSS imports, background presets
 
 .github/workflows/
-└── publish.yml       ← Auto-publish to GitHub Packages on git tag
+└── publish.yml       ← Publishes to GitHub Packages on tag push or manual trigger
 
 docs/                 ← Beginner Q&A documentation (read docs/README.md)
 dist/                 ← Build output (never edit manually)
@@ -132,37 +135,81 @@ setTheme("light");    // switch to light
 
 ---
 
+## Publishing a New Version
+
+### Automatic — via git tag
+
+```bash
+# Bump version + create git tag automatically
+npm version patch      # bug fix:     0.1.0 → 0.1.1
+npm version minor      # new feature: 0.1.0 → 0.2.0
+npm version major      # breaking:    0.1.0 → 1.0.0
+
+# Push code + tag → GitHub Actions publishes automatically
+git push origin main --follow-tags
+```
+
+### Manual — via GitHub Actions UI
+
+1. Go to the repo → **Actions** tab
+2. Click **"Publish to GitHub Packages"** in the left sidebar
+3. Click **"Run workflow"** → choose branch + dry-run option → click **"Run workflow"**
+
+> **Dry run option:** Set `dry_run = true` to run install → build → verify `dist/` without
+> actually publishing. Useful for testing the CI pipeline without releasing a new version.
+
+### One-time repo setup required
+
+Before the first publish, go to:
+**repo → Settings → Actions → General → Workflow permissions → Read and write permissions → Save**
+
+Without this, `GITHUB_TOKEN` cannot write to GitHub Packages and the job fails with exit code 1.
+
+---
+
 ## Using in a Consumer App
 
-### 1. Add `.npmrc` to the consumer app root
+### Option A — Local development (no publish needed)
 
+Reference the library directly by its folder path in the consumer app's `package.json`:
+
+```json
+"dependencies": {
+  "@hashithaniroshan12/bildor-pilot-ui": "file:../../bildor-pilot-ui"
+}
+```
+
+Then run `npm install`. No registry auth needed. Switch back to `"^0.1.0"` once published.
+
+### Option B — Install from GitHub Packages (after publishing)
+
+**Step 1:** Add `.npmrc` to the consumer app root:
 ```
 @hashithaniroshan12:registry=https://npm.pkg.github.com
 ```
 
-### 2. Authenticate once (requires a GitHub PAT with `read:packages`)
-
+**Step 2:** Authenticate once (requires a GitHub PAT with `read:packages`):
 ```bash
 npm login --registry=https://npm.pkg.github.com --scope=@hashithaniroshan12
 ```
 
-### 3. Install
-
+**Step 3:** Install:
 ```bash
 npm install @hashithaniroshan12/bildor-pilot-ui
 ```
 
-### 4. Import styles once in `main.tsx`
-
+**Step 4:** Import styles once at the top of `main.tsx`:
 ```typescript
 import "primereact/resources/themes/lara-light-blue/theme.css";
 import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
 import "@hashithaniroshan12/bildor-pilot-ui/styles";
+
+import { initTheme } from "@hashithaniroshan12/bildor-pilot-ui";
+initTheme();
 ```
 
-### 5. Use components
-
+**Step 5:** Use components anywhere:
 ```typescript
 import { Button, Card, Dropdown } from "@hashithaniroshan12/bildor-pilot-ui";
 
@@ -177,19 +224,20 @@ function MyPage() {
 
 ---
 
-## Publishing a New Version
+## CI / GitHub Actions
 
-```bash
-# Bump version + create git tag automatically
-npm version patch      # bug fix:   0.1.0 → 0.1.1
-npm version minor      # new feature: 0.1.0 → 0.2.0
-npm version major      # breaking change: 0.1.0 → 1.0.0
+The publish workflow (`.github/workflows/publish.yml`) handles two triggers:
 
-# Push code + tag — GitHub Actions publishes automatically
-git push origin main --follow-tags
-```
+| Trigger | When | Use for |
+|---|---|---|
+| Tag push (`v*`) | Automatically on `git push --follow-tags` | Real releases |
+| `workflow_dispatch` | Manually from Actions UI | Testing, dry runs, debugging |
 
-The workflow at `.github/workflows/publish.yml` triggers on any `v*` tag and runs `npm publish` to GitHub Packages.
+**Actions used:**
+- `actions/checkout@v5` — runs natively on Node.js 24
+- `actions/setup-node@v5` — runs natively on Node.js 24
+
+Both are opted into Node.js 24 via `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true`, ahead of the [June 2026 forced migration](https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/).
 
 ---
 
