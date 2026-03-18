@@ -10,7 +10,8 @@ jobs:
   publish:
     runs-on: ubuntu-latest
 
-    # Fix: use Node.js 24 runtime for GitHub Actions (suppresses deprecation warning)
+    # Opt into Node.js 24 for GitHub Actions runtime now (before the June 2026 forced migration).
+    # See: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -21,26 +22,25 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        # v5+ runs on Node 24 natively — no deprecation warning
+        uses: actions/checkout@v5
 
       - name: Setup Node.js 20
-        uses: actions/setup-node@v4
+        # v5+ runs on Node 24 natively — no deprecation warning
+        uses: actions/setup-node@v5
         with:
           node-version: "20"
           registry-url: "https://npm.pkg.github.com"
           scope: "@hashithaniroshan12"
-          # Cache npm dependencies between runs (speeds up future publishes)
           cache: "npm"
 
       - name: Install dependencies
-        # Use npm install instead of npm ci to tolerate any lockfile drift
         run: npm install
 
       - name: Build library
         run: npm run build
 
       - name: Verify dist/ was produced
-        # Fail fast with a clear message if build produced no output
         run: |
           echo "--- dist/ contents ---"
           ls -la dist/
