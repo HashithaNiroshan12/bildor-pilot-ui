@@ -22,6 +22,11 @@
     "dist"
   ],
 
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HashithaNiroshan12/bildor-pilot-ui.git"
+  },
+
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
