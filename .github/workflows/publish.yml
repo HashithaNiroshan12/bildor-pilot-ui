@@ -1,10 +1,21 @@
 name: Publish to GitHub Packages
 
-# Trigger: runs only when you push a git tag like v0.1.0, v1.2.3, etc.
+# Trigger 1: automatically runs when you push a git tag like v0.1.0
+# Trigger 2: manually from the GitHub Actions UI (Actions tab → Run workflow)
 on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run — build and verify dist/ but skip npm publish"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
 
 jobs:
   publish:
@@ -50,7 +61,13 @@ jobs:
           echo "--- dist/ verified OK ---"
 
       - name: Publish to GitHub Packages
+        # Skip publish if this is a dry run (useful for testing the build without releasing)
+        if: ${{ github.event.inputs.dry_run != 'true' }}
         run: npm publish
         env:
           # GitHub automatically provides this token — no manual setup needed
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Dry run complete
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        run: echo "Dry run finished — build verified, publish skipped."
